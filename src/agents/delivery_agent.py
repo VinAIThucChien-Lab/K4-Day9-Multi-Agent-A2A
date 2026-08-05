@@ -100,4 +100,58 @@ class DeliveryAgent:
             seller_handoff_analysis=seller_analyses,
             late_handoff_seller_ids=late_seller_ids,
         )
+
+        # ------------------------------------------------------------------
+        # LLM: Đánh giá mức độ nghiêm trọng của delay và trách nhiệm carrier
+        # Python đã tính: delivery_variance_hours, late_handoff, late_seller_ids
+        # LLM quyết định: delay_severity, carrier_accountability
+        # ------------------------------------------------------------------
+        from src.llm_client import call_llm
+
+        handoff_summary = [
+            {"seller_id": s.seller_id, "handoff_variance_hours": s.handoff_variance_hours, "late_handoff": s.late_handoff}
+            for s in seller_analyses
+        ]
+
+        prompt = f"""Bạn là một chuyên gia phân tích vận chuyển thương mại điện tử. Hãy đánh giá mức độ nghiêm trọng của việc giao hàng chậm trễ và trách nhiệm của đơn vị vận chuyển.
+
+Thông tin giao hàng (đã được hệ thống tính toán trước):
+- delivery_variance_hours: {delivery_variance_hours} (dương = trễ, âm = sớm, None = chưa giao)
+- late_handoff_seller_ids: {late_seller_ids}
+- seller_handoff_summary: {handoff_summary}
+
+Hãy quyết định:
+- delay_severity: "none" (độ lệch <= 0 hoặc None), "minor" (trễ 1-24h), "significant" (trễ 24-72h), "severe" (trễ hơn 72h)
+- carrier_accountability: "low" (không trễ hoặc lỗi do người bán), "medium" (trễ nhưng không rõ ràng nguyên nhân), "high" (trễ đáng kể và không phải lỗi của người bán)"""
+
+        schema = {
+            "type": "object",
+            "properties": {
+                "delay_severity": {"type": "string", "enum": ["none", "minor", "significant", "severe"]},
+                "carrier_accountability": {"type": "string", "enum": ["low", "medium", "high"]}
+            },
+            "required": ["delay_severity", "carrier_accountability"],
+            "additionalProperties": False
+        }
+
+        result = call_llm(prompt, schema=schema, max_tokens=1024)
+
+        if result:
+            context.flags.delay_severity = result.get("delay_severity", "none")
+            context.flags.carrier_accountability = result.get("carrier_accountability", "low")
+        else:
+            # Fallback: deterministic rules
+            if delivery_variance_hours is None or delivery_variance_hours <= 0:
+                context.flags.delay_severity = "none"
+                context.flags.carrier_accountability = "low"
+            elif delivery_variance_hours <= 24:
+                context.flags.delay_severity = "minor"
+                context.flags.carrier_accountability = "low" if late_seller_ids else "medium"
+            elif delivery_variance_hours <= 72:
+                context.flags.delay_severity = "significant"
+                context.flags.carrier_accountability = "low" if late_seller_ids else "high"
+            else:
+                context.flags.delay_severity = "severe"
+                context.flags.carrier_accountability = "low" if late_seller_ids else "high"
+
         return context
