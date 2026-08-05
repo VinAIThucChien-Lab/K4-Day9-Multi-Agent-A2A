@@ -17,7 +17,7 @@ def test_step1_config_constants():
     assert DATA_DIR.endswith("data")
     assert INPUT_DIR.endswith("input")
     assert OUTPUT_DIR.endswith("output")
-    assert LLM_MODEL_NAME == "Qwen/Qwen3-VL-8B-Instruct"
+    assert LLM_MODEL_NAME == "google/gemma-3-4b-it:free"
 
 
 def test_step1_schemas_instantiation():
@@ -61,7 +61,7 @@ def test_step1_data_loader_queries():
 
 
 def test_step1_category_translation():
-    """1.3 Verify category translation helper."""
+    """1.3 Verify category names remain in the source language."""
     data_loader = DataLoader()
     translated = data_loader.translate_category("perfumaria")
-    assert translated == "perfumery" or translated != ""
+    assert translated == "perfumaria"

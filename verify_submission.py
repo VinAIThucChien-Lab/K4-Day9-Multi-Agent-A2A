@@ -28,14 +28,15 @@ def verify_submission():
     
     with zipfile.ZipFile(zip_path, "r") as zf:
         namelist = zf.namelist()
-        json_entries = [name for name in namelist if name.endswith(".json")]
-        print(f"[Check Zip] Total JSON files in output.zip: {len(json_entries)}")
-        assert len(json_entries) == 50, f"Expected 50 JSON files in output.zip, found {len(json_entries)}"
-        
-        expected_names = {f"output/EC_{i:03d}.json" for i in range(1, 51)}
-        actual_names = set(json_entries)
-        diff = expected_names - actual_names
-        assert len(diff) == 0, f"Missing expected output/EC_xxx.json entries in zip: {diff}"
+        expected_names = [f"output/EC_{i:03d}.json" for i in range(1, 51)]
+        print(f"[Check Zip] Total entries in output.zip: {len(namelist)}")
+        assert namelist == expected_names, (
+            "ZIP must contain exactly output/EC_001.json..output/EC_050.json "
+            "in order, with no extra entries"
+        )
+        assert zf.testzip() is None, "ZIP integrity check failed"
+        for name in expected_names:
+            json.loads(zf.read(name))
         print("--> output.zip content check PASSED (contains exactly output/EC_001.json - output/EC_050.json).")
 
     # 2. Verify Output Schemas & Array Limits for 50 JSONs
@@ -97,6 +98,11 @@ def verify_submission():
     with open("trace.jsonl", "r", encoding="utf-8") as f:
         trace_lines = f.readlines()
     assert len(trace_lines) == 50, f"Expected 50 trace lines in trace.jsonl, found {len(trace_lines)}"
+    trace_rows = [json.loads(line) for line in trace_lines]
+    expected_case_ids = [f"EC_{i:03d}" for i in range(1, 51)]
+    assert [row.get("case_id") for row in trace_rows] == expected_case_ids, (
+        "trace.jsonl must contain exactly one ordered entry for every case"
+    )
     print("--> trace.jsonl contains 50 execution trace entries.")
 
     print("\n==================================================")

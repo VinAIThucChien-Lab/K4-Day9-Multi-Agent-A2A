@@ -1,6 +1,6 @@
 {
-  "model_name": "Qwen/Qwen3-VL-8B-Instruct",
-  "parameter_size": "8B",
-  "framework": "Python 3.10+, LangGraph, LangChain, Pydantic v2, Pandas",
-  "runtime": "Windows / PyTorch / CUDA"
+  "model_name": "google/gemma-3-4b-it:free",
+  "parameter_size": "4B",
+  "framework": "Python 3.10+, LangGraph, Pydantic v2, csv.DictReader, OpenRouter OpenAI-compatible API",
+  "runtime": "Cross-platform Python; OpenRouter API enabled with local fallback; no local GPU required"
 }

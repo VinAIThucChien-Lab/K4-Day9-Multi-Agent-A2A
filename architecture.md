@@ -23,10 +23,12 @@ graph TD
     DelivAgent --> SharedContext
 
     SharedContext --> PolicyAgent[6. Policy Agent / EC_POLICY_V2 Engine]
+    SharedContext -. optional explanation only .-> LLMAgent[Optional LLM Reasoning Agent]
+    LLMAgent -. does not decide policy .-> PolicyAgent
     PolicyAgent --> VerifierAgent[7. Verifier Agent]
     
     VerifierAgent --> OutputJSON[output/EC_xxx.json]
-    VerifierAgent --> TraceLog[logs/trace.jsonl]
+    VerifierAgent --> TraceLog[trace.jsonl]
     OutputJSON --> ZipArchive[output.zip]
 ```
 
@@ -38,11 +40,17 @@ graph TD
 |---|------------|----------------|------------------------|---------------------------|
 | 1 | **Coordinator Agent** | `src/agents/coordinator_agent.py`<br>`src/agents/langgraph_orchestrator.py` | Input JSON, Session Context | Điều phối toàn bộ luồng Handoff qua LangGraph StateGraph, khởi tạo `CaseContext` và gọi các Agent thành phần. |
 | 2 | **Customer Agent** | `src/agents/customer_agent.py` | `customers.csv`, `orders.csv` | Tìm `customer_unique_id`, trích xuất tối đa 5 `related_order_ids` lịch sử và đánh giá cờ `repeat_customer`. |
-| 3 | **Order & Product Agent** | `src/agents/order_product_agent.py` | `orders.csv`, `order_items.csv`, `products.csv`, `sellers.csv`, `product_category_name_translation.csv` | Trích xuất `item_ids`, `seller_ids`, `product_ids`, dịch `category_names`, tính tổng `expected_total_brl` và các cờ đơn hàng. |
+| 3 | **Order & Product Agent** | `src/agents/order_product_agent.py` | `orders.csv`, `order_items.csv`, `products.csv`, `sellers.csv` | Trích xuất `item_ids`, `seller_ids`, `product_ids`, giữ nguyên ngôn ngữ nguồn của `category_names`, tính tổng `expected_total_brl` và các cờ đơn hàng. |
 | 4 | **Payment Agent** | `src/agents/payment_agent.py` | `order_payments.csv` | Trích xuất `payment_ids`, `payment_types`, tính `payment_total_brl`, thực hiện đối soát tài chính (`difference_brl`, `reconciled`) và cờ `split_payment`. |
 | 5 | **Delivery Agent** | `src/agents/delivery_agent.py` | `orders.csv`, `order_items.csv` | Trích xuất mốc thời gian, tính `delivery_variance_hours` và độ lệch bàn giao theo seller (`handoff_variance_hours`, `late_handoff_seller_ids`). |
 | 6 | **Policy Agent** | `src/agents/policy_agent.py` | Read `CaseContext` | Bộ não quyết định chính sách `EC_POLICY_V2`: xác định Primary issue (thứ tự 1-6), Secondary issues, bên chịu trách nhiệm, khoản refund, actions và evidence IDs. |
 | 7 | **Verifier Agent** | `src/agents/verifier_agent.py` | Write JSON, Write `trace.jsonl` | Kiểm tra ràng buộc giới hạn kích thước mảng (max bounds), xử lý null khi đơn rỗng item, làm tròn 2 chữ số thập phân, xuất file JSON và ghi log trace. |
+
+`LLMReasoningAgent` là enrichment tùy chọn, sử dụng model
+`meta-llama/Llama-3.1-8B-Instruct` (8B). Đường chạy `main.py` bật node này để tạo
+diễn giải cho từng case qua Hugging Face API, với local fallback khi provider lỗi.
+Mọi quyết định chấm điểm
+đều do `PolicyAgent` áp dụng trực tiếp `EC_POLICY_V2` trên dữ liệu CSV kiểm chứng được.
 
 ---
 
@@ -55,14 +63,15 @@ Tất cả các Agent đọc và ghi vào một Data Contract tập trung là Py
 3. **Order & Product Handoff**: `Order Product Agent` bổ sung `affected_entities.item_ids`, `seller_ids`, `product_context` và giá trị tài chính dự kiến `expected_total_brl`.
 4. **Payment Handoff**: `Payment Agent` đọc `expected_total_brl`, tính `difference_brl` và xác định cờ đối soát `reconciled`.
 5. **Delivery Handoff**: `Delivery Agent` tính toán sai số thời gian giao hàng và các seller bàn giao muộn.
-6. **Policy Decision**: `Policy Agent` tổng hợp toàn bộ các dữ liệu trên để áp dụng bảng quy tắc `EC_POLICY_V2`.
-7. **Verification & Export**: `Verifier Agent` đảm bảo JSON Schema chuẩn tuyệt đối, giới hạn mảng hợp lệ và ghi ra file `output/{case_id}.json`.
+6. **Optional LLM Enrichment**: chỉ tạo diễn giải khi được bật rõ ràng; không thay đổi các facts hoặc quyết định policy.
+7. **Policy Decision**: `Policy Agent` tổng hợp toàn bộ các dữ liệu trên để áp dụng bảng quy tắc `EC_POLICY_V2`.
+8. **Verification & Export**: `Verifier Agent` đảm bảo JSON Schema, consistency, giới hạn mảng và ghi ra `output/{case_id}.json` cùng `trace.jsonl`.
 
 ---
 
 ## 4. Công Nghệ Sử Dụng (Technology Stack)
 
-- **Framework**: LangGraph (`StateGraph`), LangChain (`langchain-core`), Python 3.10+
-- **LLM Model**: `Qwen/Qwen3-VL-8B-Instruct` / `meta/llama-3.1-8b-instruct` ($\le 10\text{B}$ parameters)
-- **Data Engine**: Pandas, Pydantic v2, CSV DictReader O(1) Indexing
-- **Virtual Environment**: Managed via `uv` (`.venv`)
+- **Framework**: LangGraph (`StateGraph`), Pydantic v2, Python 3.10+
+- **Optional LLM Model**: `meta-llama/Llama-3.1-8B-Instruct` (8B, $\le 10\text{B}$)
+- **Data Engine**: Python `csv.DictReader` và dictionary index O(1)
+- **Runtime**: Cross-platform Python; gọi Hugging Face API khi chạy `main.py`, với local fallback; dependency được khóa bằng `uv.lock`

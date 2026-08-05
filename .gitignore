@@ -10,3 +10,4 @@ logging/
 output/
 *.zip
 trace.jsonl
+submission-*/

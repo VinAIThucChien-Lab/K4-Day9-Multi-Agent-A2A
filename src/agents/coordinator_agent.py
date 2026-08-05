@@ -12,9 +12,16 @@ from src.agents.langgraph_orchestrator import LangGraphDisputeOrchestrator
 class CoordinatorAgent:
     """Coordinator Agent invoking the LangGraph Multi-Agent StateGraph."""
 
-    def __init__(self, data_loader: Optional[DataLoader] = None):
+    def __init__(
+        self,
+        data_loader: Optional[DataLoader] = None,
+        enable_llm: bool = False,
+    ):
         self.data_loader = data_loader or DataLoader()
-        self.orchestrator = LangGraphDisputeOrchestrator(data_loader=self.data_loader)
+        self.orchestrator = LangGraphDisputeOrchestrator(
+            data_loader=self.data_loader,
+            enable_llm=enable_llm,
+        )
 
     def run_case(
         self,

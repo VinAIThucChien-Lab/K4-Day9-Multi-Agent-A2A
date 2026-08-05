@@ -1,6 +1,7 @@
 """Unit test for LangGraph StateGraph Multi-Agent execution."""
 
 import os
+import tempfile
 import pytest
 from src.config import INPUT_DIR
 from src.agents.langgraph_orchestrator import LangGraphDisputeOrchestrator
@@ -12,7 +13,12 @@ def test_langgraph_orchestrator_invoke():
     assert os.path.exists(input_file), f"Input file not found: {input_file}"
 
     orchestrator = LangGraphDisputeOrchestrator()
-    output = orchestrator.run_case(input_file)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        output = orchestrator.run_case(
+            input_file,
+            output_dir=tmp_dir,
+            trace_file=os.path.join(tmp_dir, "trace.jsonl"),
+        )
 
     assert isinstance(output, dict)
     assert output["case_id"] == "EC_001"
