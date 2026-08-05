@@ -29,10 +29,17 @@ def main():
         print(f"Processing {filename}...")
         coordinator.run_case(filepath)
 
-    # Archive output directory into output.zip
+    # Archive output directory into output.zip using shutil for proper directory entries
+    import shutil
     zip_path = "output.zip"
     output_jsons = sorted(glob.glob(os.path.join(OUTPUT_DIR, "*.json")))
+    
+    # make_archive creates output.zip from the OUTPUT_DIR, but we want the zip to contain the folder "output/" itself.
+    # To do this, we can zip the current directory but only include the "output" folder.
+    # A robust way is to create a temporary folder structure or just use zipfile but explicitly add the directory.
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        # Explicitly add the directory entry first
+        zf.writestr(zipfile.ZipInfo("output/"), "")
         for json_file in output_jsons:
             arcname = f"output/{os.path.basename(json_file)}"
             zf.write(json_file, arcname=arcname)

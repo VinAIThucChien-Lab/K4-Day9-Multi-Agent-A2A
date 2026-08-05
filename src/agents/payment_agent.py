@@ -18,7 +18,7 @@ class PaymentAgent:
 
         context.affected_entities.payment_ids = [
             f"{context.claimed_order_id}:{row['payment_sequential']}"
-            for row in payments[:5]
+            for row in payments
         ]
 
         # dict preserves the source-row order while removing duplicates.

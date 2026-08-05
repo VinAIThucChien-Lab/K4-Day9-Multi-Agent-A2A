@@ -15,14 +15,15 @@ class CustomerAgent:
             return context
 
         customer_unique_id = data_loader.get_customer_unique_id(customer_id)
-        related_orders = data_loader.get_customer_history(customer_unique_id, exclude_order_id=claimed_order_id)
+        history = data_loader.get_customer_history(customer_unique_id, exclude_order_id=claimed_order_id)
         
-        # Max 5 related order IDs
-        related_order_ids = related_orders[:5]
+        # All related orders
+        related_order_ids = history
+        
+        context.flags.repeat_customer = len(history) > 0
         
         context.customer_context = CustomerContext(
             customer_unique_id=customer_unique_id,
             related_order_ids=related_order_ids
         )
-        context.flags.repeat_customer = len(related_order_ids) > 0
         return context
