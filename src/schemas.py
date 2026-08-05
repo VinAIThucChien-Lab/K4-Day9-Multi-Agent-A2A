@@ -69,6 +69,12 @@ class InternalFlags(BaseModel):
     split_payment: bool = False
     repeat_customer: bool = False
     multiple_categories: bool = False
+    # LLM-evaluated fields
+    customer_risk_level: str = "low"       # low | medium | high
+    investigation_priority: str = "normal" # normal | elevated
+    payment_anomaly: str = "none"          # none | minor_discrepancy | suspicious
+    delay_severity: str = "none"           # none | minor | significant | severe
+    carrier_accountability: str = "low"    # low | medium | high
 
 class CaseContext(BaseModel):
     case_id: str

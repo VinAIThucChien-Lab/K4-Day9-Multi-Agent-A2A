@@ -30,19 +30,19 @@ class OrderProductAgent:
         else:
             context.flags.has_items = True
             
-            # item_ids: max 5 items
-            item_ids = [f"{claimed_order_id}:{item['order_item_id']}" for item in items][:5]
+            # item_ids: all items
+            item_ids = [f"{claimed_order_id}:{item['order_item_id']}" for item in items]
             context.affected_entities.item_ids = item_ids
             
-            # seller_ids: unique seller_ids (max 3)
+            # seller_ids: unique seller_ids
             seller_ids = []
             for item in items:
                 sid = item.get("seller_id")
                 if sid and sid not in seller_ids:
                     seller_ids.append(sid)
-            context.affected_entities.seller_ids = seller_ids[:3]
+            context.affected_entities.seller_ids = seller_ids
             
-            # product_ids & category_names (unique, max 5)
+            # product_ids & category_names (unique)
             product_ids = []
             category_names = []
             for item in items:
@@ -56,8 +56,8 @@ class OrderProductAgent:
                         if category_name and category_name not in category_names:
                             category_names.append(category_name)
                             
-            context.product_context.product_ids = product_ids[:5]
-            context.product_context.category_names = category_names[:5]
+            context.product_context.product_ids = product_ids
+            context.product_context.category_names = category_names
             
             # Financial calculations (round 2 decimals)
             item_total = sum(float(item["price"]) for item in items)

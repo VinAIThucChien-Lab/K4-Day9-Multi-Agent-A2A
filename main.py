@@ -1,4 +1,4 @@
-"""Main orchestration script for running 50 dispute cases and archiving outputs."""
+"""Main orchestration script for running 50 dispute cases in parallel using ThreadPoolExecutor."""
 
 import glob
 import json
@@ -11,6 +11,12 @@ from pathlib import Path
 from src.config import BASE_DIR, INPUT_DIR, OUTPUT_DIR
 from src.data_loader import DataLoader
 from src.agents.coordinator_agent import CoordinatorAgent
+
+
+def process_file(filepath: str, coordinator: CoordinatorAgent):
+    filename = os.path.basename(filepath)
+    print(f"Processing {filename}...")
+    return coordinator.run_case(filepath)
 
 
 def main():

@@ -134,3 +134,4 @@ class VerifierAgent:
             f.write(json.dumps(trace_entry) + "\n")
 
         return data
+
