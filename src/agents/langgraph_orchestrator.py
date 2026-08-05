@@ -43,7 +43,7 @@ class LangGraphDisputeOrchestrator:
         self.enable_llm = enable_llm
         if enable_llm:
             # Import lazily so the deterministic submission path has no network
-            # dependency and does not require the Hugging Face client at runtime.
+            # dependency and does not require the OpenRouter client at runtime.
             from src.agents.llm_agent import LLMReasoningAgent
 
             self.llm_agent = LLMReasoningAgent()

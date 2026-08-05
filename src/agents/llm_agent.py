@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class LLMReasoningAgent:
     """
-    Gọi Gemma qua OpenRouter để tạo diễn giải bổ trợ. Quyết định policy vẫn do
+    Gọi Qwen2.5 7B Instruct qua OpenRouter để tạo diễn giải bổ trợ. Quyết định policy vẫn do
     PolicyAgent thực hiện trên dữ liệu có thể kiểm chứng.
     """
 

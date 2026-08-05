@@ -6,7 +6,7 @@ Hệ thống Multi-Agent giải quyết khiếu nại thương mại điện t�
 
 ## User Review Required
 
-> - **Cấu hình Model**: Model cố định trong source là `meta-llama/Llama-3.1-8B-Instruct`; token provider được đọc từ `.env`. Tất cả agent tuân thủ giới hạn model <= 10B parameters.
+> - **Cấu hình Model**: Model cố định trong source là `qwen/qwen3-4b:free` (4B) qua OpenRouter; token provider được đọc từ `.env`. Tất cả agent tuân thủ giới hạn model <= 10B parameters.
 > - **Nguyên tắc dữ liệu**: Sử dụng các rule-based parser kết hợp LLM Agent trong việc kiểm tra, tổng hợp evidence và áp dụng `EC_POLICY_V2` để đảm bảo tính chuẩn xác tuyệt đối (không sinh dữ liệu giả/hallucination).
 
 ---

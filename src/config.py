@@ -10,4 +10,4 @@ INPUT_DIR = sub_input if os.path.exists(sub_input) and any(f.startswith("EC_") f
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 LOGGING_DIR = os.path.join(BASE_DIR, "logs")
 
-LLM_MODEL_NAME = "google/gemma-3-4b-it:free"
+LLM_MODEL_NAME = "qwen/qwen-2.5-7b-instruct"

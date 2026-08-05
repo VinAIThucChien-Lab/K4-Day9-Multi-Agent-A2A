@@ -47,10 +47,12 @@ graph TD
 | 7 | **Verifier Agent** | `src/agents/verifier_agent.py` | Write JSON, Write `trace.jsonl` | Kiểm tra ràng buộc giới hạn kích thước mảng (max bounds), xử lý null khi đơn rỗng item, làm tròn 2 chữ số thập phân, xuất file JSON và ghi log trace. |
 
 `LLMReasoningAgent` là enrichment tùy chọn, sử dụng model
-`meta-llama/Llama-3.1-8B-Instruct` (8B). Đường chạy `main.py` bật node này để tạo
-diễn giải cho từng case qua Hugging Face API, với local fallback khi provider lỗi.
-Mọi quyết định chấm điểm
-đều do `PolicyAgent` áp dụng trực tiếp `EC_POLICY_V2` trên dữ liệu CSV kiểm chứng được.
+`qwen/qwen-2.5-7b-instruct` (7B). Đường chạy `main.py` bật node này để tạo
+diễn giải bổ trợ; nếu API ngoài bận/lỗi, hệ thống quay về local fallback suy luận có cấu trúc.
+
+### Quyền hạn & Bảo mật API:
+- **Rule-Based Agents**: Truy cập dữ liệu local CSV đã nạp vào bộ nhớ.
+- **Optional LLM Model**: `qwen/qwen-2.5-7b-instruct` (7B, $\le 10\text{B}$)
 
 ---
 
@@ -72,6 +74,6 @@ Tất cả các Agent đọc và ghi vào một Data Contract tập trung là Py
 ## 4. Công Nghệ Sử Dụng (Technology Stack)
 
 - **Framework**: LangGraph (`StateGraph`), Pydantic v2, Python 3.10+
-- **Optional LLM Model**: `meta-llama/Llama-3.1-8B-Instruct` (8B, $\le 10\text{B}$)
+- **Optional LLM Model**: `qwen/qwen3-4b:free` (4B, $\le 10\text{B}$)
 - **Data Engine**: Python `csv.DictReader` và dictionary index O(1)
-- **Runtime**: Cross-platform Python; gọi Hugging Face API khi chạy `main.py`, với local fallback; dependency được khóa bằng `uv.lock`
+- **Runtime**: Cross-platform Python; gọi OpenRouter API khi chạy `main.py`, với local fallback; dependency được khóa bằng `uv.lock`

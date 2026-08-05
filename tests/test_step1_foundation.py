@@ -17,7 +17,7 @@ def test_step1_config_constants():
     assert DATA_DIR.endswith("data")
     assert INPUT_DIR.endswith("input")
     assert OUTPUT_DIR.endswith("output")
-    assert LLM_MODEL_NAME == "google/gemma-3-4b-it:free"
+    assert LLM_MODEL_NAME == "qwen/qwen3-4b:free"
 
 
 def test_step1_schemas_instantiation():

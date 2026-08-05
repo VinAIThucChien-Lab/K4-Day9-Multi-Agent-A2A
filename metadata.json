@@ -1,6 +1,6 @@
 {
-  "model_name": "google/gemma-3-4b-it:free",
-  "parameter_size": "4B",
+  "model_name": "qwen/qwen-2.5-7b-instruct",
+  "parameter_size": "7B",
   "framework": "Python 3.10+, LangGraph, Pydantic v2, csv.DictReader, OpenRouter OpenAI-compatible API",
   "runtime": "Cross-platform Python; OpenRouter API enabled with local fallback; no local GPU required"
 }

@@ -40,7 +40,7 @@ Policy Agent áp dụng sáu rule theo thứ tự ưu tiên tuyệt đối; Veri
 giới hạn, null handling, consistency và xuất artifact.
 
 Policy được triển khai rule-based để kết quả có thể tái lập và truy nguyên trực tiếp
-từ CSV. `meta-llama/Llama-3.1-8B-Instruct` (8B) chỉ là enrichment tùy chọn, không được dùng để quyết định primary
+từ CSV. `qwen/qwen3-4b:free` (4B) chỉ là enrichment tùy chọn, không được dùng để quyết định primary
 issue, responsible party hoặc refund trong đường submission.
 
 ### Contract
