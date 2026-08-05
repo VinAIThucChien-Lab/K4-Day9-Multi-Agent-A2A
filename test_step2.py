@@ -17,6 +17,8 @@ def test_step2():
     with open(case_path, "r", encoding="utf-8") as f:
         data = json.load(f)
         
+    if "claimed_order_id" not in data:
+        data["claimed_order_id"] = data.get("customer_request", {}).get("claimed_order_id", "")
     ctx = CaseContext(**data)
     print(f"Case ID: {ctx.case_id}, Claimed Order ID: {ctx.claimed_order_id}")
     
