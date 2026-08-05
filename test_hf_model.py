@@ -1,64 +1,54 @@
-"""Diagnostic script to test Hugging Face Model API connection."""
+"""Diagnostic OpenRouter call for the configured Qwen model.
+
+The historical filename is retained so existing run instructions keep working.
+"""
 
 import os
+import sys
+
 from dotenv import load_dotenv
-from huggingface_hub import InferenceClient
+from openai import OpenAI
 
-load_dotenv()
+from src.config import LLM_MODEL_NAME
 
-def test_huggingface_connection():
-    token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN")
-    model_name = "Qwen/Qwen3-VL-8B-Instruct"
 
-    print(f"Testing HF API Connection...")
-    print(f"Token found: {'Yes (' + token[:6] + '***)' if token else 'No'}")
-    print(f"Target Model: {model_name}")
+def test_openrouter_connection() -> bool:
+    load_dotenv()
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    timeout = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "20"))
 
-    if not token or token.startswith("hf_your"):
-        print("ERROR: HF_TOKEN is missing or not set to a valid token in .env!")
+    print("Testing OpenRouter API connection...")
+    print(f"API key found: {'Yes' if api_key else 'No'}")
+    print(f"Target model: {LLM_MODEL_NAME}")
+    if not api_key:
+        print("ERROR: OPENROUTER_API_KEY is missing from .env")
         return False
 
     try:
-        client = InferenceClient(api_key=token)
-        print("Sending test prompt to Hugging Face Inference API...")
-        
-        # Test chat completion with model
-        messages = [
-            {"role": "system", "content": "You are a helpful e-commerce dispute assistant."},
-            {"role": "user", "content": "Hello! Confirm if the API is operational."}
-        ]
-
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=messages,
-            max_tokens=100
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://openrouter.ai/api/v1",
+            timeout=timeout,
         )
-
+        response = client.chat.completions.create(
+            model=LLM_MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "Chỉ trả lời bằng tiếng Việt."},
+                {"role": "user", "content": "Trả lời chính xác: API_OK"},
+            ],
+            max_tokens=512,
+        )
         content = response.choices[0].message.content
-        print("\nSUCCESS! Model response received:")
-        print("--------------------------------------------------")
-        print(content)
-        print("--------------------------------------------------")
-        return True
-
-    except Exception as e:
-        print(f"\nInferenceClient direct call failed: {e}")
-        print("Trying HuggingFace Hub client with text_generation fallback...")
-
-        try:
-            # Fallback test with text_generation API
-            res = client.text_generation(
-                prompt="Confirm if Hugging Face model API is working properly.",
-                model=model_name,
-                max_new_tokens=50
-            )
-            print("\nSUCCESS (text_generation)! Model response:")
-            print(res)
-            return True
-        except Exception as e2:
-            print(f"Fallback call failed: {e2}")
+        if not content:
+            print("ERROR: Model returned no final content")
             return False
+        print("SUCCESS! Model response received:")
+        print(content)
+        return True
+    except Exception as exc:
+        print(f"OpenRouter API call failed ({type(exc).__name__}): {exc}")
+        return False
 
 
 if __name__ == "__main__":
-    test_huggingface_connection()
+    sys.exit(0 if test_openrouter_connection() else 1)

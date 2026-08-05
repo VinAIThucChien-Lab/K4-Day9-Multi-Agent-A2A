@@ -30,12 +30,23 @@ class DisputeGraphState(TypedDict):
 class LangGraphDisputeOrchestrator:
     """Multi-Agent Pipeline constructed using LangGraph StateGraph."""
 
-    def __init__(self, data_loader: Optional[DataLoader] = None):
+    def __init__(
+        self,
+        data_loader: Optional[DataLoader] = None,
+        enable_llm: bool = False,
+    ):
         self.data_loader = data_loader or DataLoader()
         self.customer_agent = CustomerAgent()
         self.order_product_agent = OrderProductAgent()
         self.payment_agent = PaymentAgent()
         self.delivery_agent = DeliveryAgent()
+        self.enable_llm = enable_llm
+        if enable_llm:
+            # Import lazily so the deterministic submission path has no network
+            # dependency and does not require the OpenRouter client at runtime.
+            from src.agents.llm_agent import LLMReasoningAgent
+
+            self.llm_agent = LLMReasoningAgent()
         self.policy_agent = PolicyAgent()
         self.verifier_agent = VerifierAgent()
         self.graph = self._build_graph()
@@ -60,6 +71,10 @@ class LangGraphDisputeOrchestrator:
             state["context"] = self.delivery_agent.process(state["context"], self.data_loader)
             return state
 
+        def llm_reasoning_node(state: DisputeGraphState) -> DisputeGraphState:
+            state["context"] = self.llm_agent.process(state["context"])
+            return state
+
         def policy_node(state: DisputeGraphState) -> DisputeGraphState:
             state["context"] = self.policy_agent.process(state["context"])
             return state
@@ -80,6 +95,8 @@ class LangGraphDisputeOrchestrator:
         workflow.add_node("order_product_agent", order_product_node)
         workflow.add_node("payment_agent", payment_node)
         workflow.add_node("delivery_agent", delivery_node)
+        if self.enable_llm:
+            workflow.add_node("llm_agent", llm_reasoning_node)
         workflow.add_node("policy_agent", policy_node)
         workflow.add_node("verifier_agent", verifier_node)
 
@@ -88,7 +105,11 @@ class LangGraphDisputeOrchestrator:
         workflow.add_edge("customer_agent", "order_product_agent")
         workflow.add_edge("order_product_agent", "payment_agent")
         workflow.add_edge("payment_agent", "delivery_agent")
-        workflow.add_edge("delivery_agent", "policy_agent")
+        if self.enable_llm:
+            workflow.add_edge("delivery_agent", "llm_agent")
+            workflow.add_edge("llm_agent", "policy_agent")
+        else:
+            workflow.add_edge("delivery_agent", "policy_agent")
         workflow.add_edge("policy_agent", "verifier_agent")
         workflow.add_edge("verifier_agent", END)
 

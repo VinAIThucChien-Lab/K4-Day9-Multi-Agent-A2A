@@ -6,7 +6,7 @@ Hệ thống Multi-Agent giải quyết khiếu nại thương mại điện t�
 
 ## User Review Required
 
-> - **Cấu hình Model**: Đã ghi nhận cấu hình `.env` (`HF_TOKEN`, `Qwen/Qwen3-VL-8B-Instruct`). Tất cả các agent sẽ tuân thủ quy định model <= 10B parameters.
+> - **Cấu hình Model**: Model cố định trong source là `nvidia/nemotron-nano-9b-v2:free` (9B) qua OpenRouter; token provider được đọc từ `.env`. Tất cả agent tuân thủ giới hạn model <= 10B parameters.
 > - **Nguyên tắc dữ liệu**: Sử dụng các rule-based parser kết hợp LLM Agent trong việc kiểm tra, tổng hợp evidence và áp dụng `EC_POLICY_V2` để đảm bảo tính chuẩn xác tuyệt đối (không sinh dữ liệu giả/hallucination).
 
 ---
@@ -47,7 +47,7 @@ graph TD
    - Đánh giá điều kiện `repeat_customer`.
 3. **Order & Product Agent**:
    - Truy vấn `orders`, `order_items`, `products`, `sellers`.
-   - Trích xuất `item_ids`, `seller_ids`, `product_ids`, `category_names`.
+   - Trích xuất `item_ids`, `seller_ids`, `product_ids`, `category_names` và giữ nguyên ngôn ngữ nguồn, không dịch sang tiếng Anh.
    - Kiểm tra `multi_item_order`, `multi_seller_order`, `multiple_categories`.
    - Tính toán `expected_total_brl = sum(price) + sum(freight_value)`. Nếu không có item, đặt `expected_total_brl = null`.
 4. **Payment Agent**:

@@ -51,10 +51,10 @@ class OrderProductAgent:
                     product_ids.append(pid)
                     prod = data_loader.get_product(pid)
                     if prod and prod.get("product_category_name"):
-                        cat_pt = prod["product_category_name"]
-                        cat_en = data_loader.translate_category(cat_pt)
-                        if cat_en and cat_en not in category_names:
-                            category_names.append(cat_en)
+                        raw_cat = prod["product_category_name"]
+                        category_name = data_loader.translate_category(raw_cat)
+                        if category_name and category_name not in category_names:
+                            category_names.append(category_name)
                             
             context.product_context.product_ids = product_ids
             context.product_context.category_names = category_names

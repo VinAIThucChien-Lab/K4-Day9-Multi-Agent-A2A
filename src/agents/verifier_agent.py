@@ -24,6 +24,20 @@ class VerifierAgent:
 
         data = context.model_dump()
 
+        # Partial contexts are supported for isolated slicing/null-handling tests.
+        # The real coordinator always supplies an assessment before this node.
+        if context.case_assessment is not None:
+            if context.case_assessment.primary_issue not in {
+                "canceled_order_paid", "unavailable_order_paid",
+                "late_delivery_seller", "late_delivery_logistics",
+                "valid_split_payment", "unsupported_late_claim",
+            }:
+                raise ValueError("invalid primary_issue")
+            if context.case_assessment.case_status not in {"action_required", "no_action"}:
+                raise ValueError("invalid case_status")
+            if not 0.0 <= context.case_assessment.confidence <= 1.0:
+                raise ValueError("confidence must be between 0 and 1")
+
         # Remove internal flags from final JSON output
         data.pop("flags", None)
         data.pop("claimed_order_id", None)
@@ -55,6 +69,24 @@ class VerifierAgent:
         if "resolution_actions" in data:
             data["resolution_actions"] = data.get("resolution_actions", [])[:5]
 
+        # Enforce two-decimal output even if an upstream agent changes later.
+        monetary_fields = {
+            "item_total_brl", "freight_total_brl", "expected_total_brl",
+            "payment_total_brl", "difference_brl", "recommended_refund_brl",
+        }
+        timing_fields = {"delivery_variance_hours", "handoff_variance_hours"}
+
+        def round_numbers(value: Any, key: str = "") -> Any:
+            if isinstance(value, dict):
+                return {k: round_numbers(v, k) for k, v in value.items()}
+            if isinstance(value, list):
+                return [round_numbers(item, key) for item in value]
+            if key in monetary_fields | timing_fields and isinstance(value, (int, float)):
+                return round(float(value), 2)
+            return value
+
+        data = round_numbers(data)
+
         # Null handling when has_items is False
         if not context.flags.has_items:
             if "payment_reconciliation" in data and data["payment_reconciliation"]:
@@ -64,52 +96,16 @@ class VerifierAgent:
                 data["payment_reconciliation"]["difference_brl"] = None
                 data["payment_reconciliation"]["reconciled"] = None
 
-        # LLM: Final sanity check — đánh giá tính nhất quán và điều chỉnh confidence
-        # Python đã chuẩn bị toàn bộ data; LLM chỉ đánh giá final quality
-        try:
-            from src.llm_client import call_llm
-            primary_issue = (
-                data.get("case_assessment", {}).get("primary_issue", "")
-                if data.get("case_assessment") else ""
-            )
-            refund = (
-                data.get("financial_resolution", {}).get("recommended_refund_brl", 0.0)
-                if data.get("financial_resolution") else 0.0
-            )
-            actions = data.get("resolution_actions", [])
-            cause_codes = [c.get("cause_code") for c in data.get("root_cause_analysis", {}).get("ranked_causes", [])]
+        if data.get("case_assessment") is not None:
+            refund = data["financial_resolution"]["recommended_refund_brl"]
+            expected_status = "action_required" if refund > 0 else "no_action"
+            if data["case_assessment"]["case_status"] != expected_status:
+                raise ValueError("case_status is inconsistent with recommended refund")
 
-            prompt = f"""Bạn là một chuyên viên kiểm soát chất lượng (QA) về giải quyết tranh chấp thương mại điện tử.
-Hãy kiểm tra tính nhất quán nội bộ của quyết định này:
-
-- primary_issue: {primary_issue}
-- cause_codes: {cause_codes}
-- recommended_refund_brl: {refund}
-- resolution_actions: {actions}
-- delay_severity: {context.flags.delay_severity}
-- payment_anomaly: {context.flags.payment_anomaly}
-- customer_risk_level: {context.flags.customer_risk_level}
-
-Đánh giá độ tin cậy (confidence): 0.95 nếu hoàn toàn nhất quán, 0.85 nếu có một số điểm cần lưu ý (minor concerns), 0.70 nếu không nhất quán."""
-
-            verifier_schema = {
-                "type": "object",
-                "properties": {
-                    "consistent": {"type": "boolean"},
-                    "confidence": {"type": "number"},
-                    "notes": {"type": "string"}
-                },
-                "required": ["consistent", "confidence", "notes"],
-                "additionalProperties": False
-            }
-
-            result = call_llm(prompt, schema=verifier_schema, max_tokens=1024)
-            if result and data.get("case_assessment"):
-                confidence = float(result.get("confidence", 0.95))
-                # Clamp to valid range
-                data["case_assessment"]["confidence"] = max(0.0, min(1.0, confidence))
-        except Exception:
-            pass  # Don't fail export if LLM check fails
+        allowed_party_types = {"platform", "seller", "logistics_provider"}
+        for party in data["root_cause_analysis"]["responsible_parties"]:
+            if party["party_type"] not in allowed_party_types:
+                raise ValueError(f"invalid responsible party type: {party['party_type']}")
 
         # Write output file
         out_path = os.path.join(output_dir, f"{context.case_id}.json")
@@ -129,6 +125,9 @@ Hãy kiểm tra tính nhất quán nội bộ của quyết định này:
             "case_id": context.case_id,
             "primary_issue": primary_issue,
             "refund": refund,
+            "llm_status": context.investigation_scope.get("llm_status", "disabled"),
+            "llm_model": context.investigation_scope.get("llm_model"),
+            "llm_provider": context.investigation_scope.get("llm_provider"),
             "timestamp": datetime.now().isoformat()
         }
         with open(trace_file, "a", encoding="utf-8") as f:

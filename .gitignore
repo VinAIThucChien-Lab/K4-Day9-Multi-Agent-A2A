@@ -8,3 +8,6 @@ __pycache__/
 logs/
 logging/
 output/
+*.zip
+trace.jsonl
+submission-*/
