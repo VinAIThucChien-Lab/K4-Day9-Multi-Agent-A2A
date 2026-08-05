@@ -65,7 +65,7 @@ class LLMReasoningAgent:
                 response = self.client.chat.completions.create(
                     model=self.model_name,
                     messages=messages,
-                    max_tokens=100
+                    max_tokens=512
                 )
                 content = response.choices[0].message.content
                 if content:

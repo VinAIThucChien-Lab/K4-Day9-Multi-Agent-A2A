@@ -36,10 +36,14 @@ def test_openrouter_connection() -> bool:
                 {"role": "system", "content": "Chỉ trả lời bằng tiếng Việt."},
                 {"role": "user", "content": "Trả lời chính xác: API_OK"},
             ],
-            max_tokens=20,
+            max_tokens=512,
         )
+        content = response.choices[0].message.content
+        if not content:
+            print("ERROR: Model returned no final content")
+            return False
         print("SUCCESS! Model response received:")
-        print(response.choices[0].message.content)
+        print(content)
         return True
     except Exception as exc:
         print(f"OpenRouter API call failed ({type(exc).__name__}): {exc}")

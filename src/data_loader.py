@@ -63,6 +63,12 @@ class DataLoader:
         for row in products:
             self.products_by_id[row['product_id']] = row
 
+        # 6. Category Translation
+        self.category_translation = {}
+        translations = self._load_csv("product_category_name_translation.csv")
+        for row in translations:
+            self.category_translation[row['product_category_name']] = row['product_category_name_english']
+
     def get_order(self, order_id: str) -> dict:
         return self.orders_by_id.get(order_id, {})
 
@@ -87,5 +93,5 @@ class DataLoader:
         return self.products_by_id.get(product_id, {})
 
     def translate_category(self, category_pt: str) -> str:
-        """Compatibility helper that deliberately preserves the source language."""
+        """Compatibility helper that preserves the source Portuguese category name."""
         return category_pt
