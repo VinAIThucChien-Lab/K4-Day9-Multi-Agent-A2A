@@ -93,5 +93,7 @@ class DataLoader:
         return self.products_by_id.get(product_id, {})
 
     def translate_category(self, category_pt: str) -> str:
-        """Compatibility helper that preserves the source Portuguese category name."""
-        return category_pt
+        """Translate Portuguese product category name to English."""
+        if not category_pt:
+            return ""
+        return self.category_translation.get(category_pt, category_pt)
