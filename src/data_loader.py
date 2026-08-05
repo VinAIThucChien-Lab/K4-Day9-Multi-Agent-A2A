@@ -23,7 +23,7 @@ class DataLoader:
             print(f"Warning: File not found {filepath}")
             return []
         
-        with open(filepath, mode='r', encoding='utf-8') as f:
+        with open(filepath, mode='r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             return list(reader)
 

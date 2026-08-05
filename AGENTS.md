@@ -130,13 +130,13 @@ class CaseContext(BaseModel):
 - `src/data_loader.py`
 
 ### 📋 Checklist chi tiết:
-- [ ] **1.1 Config (`src/config.py`)**:
+- [x] **1.1 Config (`src/config.py`)**:
   - Đọc file `.env` bằng `python-dotenv`.
   - Khai báo các hằng số đường dẫn: `DATA_DIR`, `INPUT_DIR`, `OUTPUT_DIR`, `LOGGING_DIR`.
   - Khai báo hằng số Model: `LLM_MODEL_NAME = "Qwen/Qwen3-VL-8B-Instruct"`.
-- [ ] **1.2 Schemas (`src/schemas.py`)**:
+- [x] **1.2 Schemas (`src/schemas.py`)**:
   - Tạo đầy đủ các Pydantic model như phần **Giao Thức Dữ Liệu Chuẩn** ở trên.
-- [ ] **1.3 Data Loader (`src/data_loader.py`)**:
+- [x] **1.3 Data Loader (`src/data_loader.py`)**:
   - Tải 9 file CSV trong `data/` vào bộ nhớ khi khởi tạo class `DataLoader`.
   - Xây dựng Index dạng `dict` tra cứu $O(1)$:
     - `orders_by_id`: `order_id -> row_dict`
@@ -156,7 +156,7 @@ class CaseContext(BaseModel):
     - `get_order_payments(order_id: str) -> list[dict]`
     - `get_product(product_id: str) -> dict`
     - `translate_category(category_pt: str) -> str`
-- [ ] **1.4 Verification**:
+- [x] **1.4 Verification**:
   - Chạy `python -c "from src.data_loader import DataLoader; dl = DataLoader(); print(dl.get_order('e4834301c8177937d5085580f7454200'))"` để kiểm tra tính đúng đắn.
 
 ---
@@ -173,14 +173,14 @@ class CaseContext(BaseModel):
 - Class `CaseContext` và class `DataLoader`.
 
 ### 📋 Checklist chi tiết:
-- [ ] **2.1 Customer Agent (`src/agents/customer_agent.py`)**:
+- [x] **2.1 Customer Agent (`src/agents/customer_agent.py`)**:
   - Class `CustomerAgent`: Hàm `process(context: CaseContext, data_loader: DataLoader) -> CaseContext`.
   - Tra cứu `customer_id` từ `claimed_order_id`.
   - Tra cứu `customer_unique_id` từ `customer_id`.
   - Lấy tất cả các order của `customer_unique_id`, **loại trừ** `claimed_order_id` để đưa vào `related_order_ids` (tối đa 5 order).
   - Điền `context.customer_context = CustomerContext(customer_unique_id=..., related_order_ids=...)`.
   - Cập nhật cờ: `context.flags.repeat_customer = len(related_order_ids) > 0`.
-- [ ] **2.2 Order & Product Agent (`src/agents/order_product_agent.py`)**:
+- [x] **2.2 Order & Product Agent (`src/agents/order_product_agent.py`)**:
   - Class `OrderProductAgent`: Hàm `process(context: CaseContext, data_loader: DataLoader) -> CaseContext`.
   - Lấy thông tin order từ `data_loader.get_order(claimed_order_id)`. Điền `context.flags.order_status = order["order_status"]`.
   - Điền `affected_entities.order_ids = [claimed_order_id]`.
@@ -208,7 +208,7 @@ class CaseContext(BaseModel):
       - `context.flags.multi_item_order = len(items) >= 2`
       - `context.flags.multi_seller_order = len(seller_ids) >= 2`
       - `context.flags.multiple_categories = len(category_names) >= 2`
-- [ ] **2.3 Verification**:
+- [x] **2.3 Verification**:
   - Viết test thử chạy `CustomerAgent` và `OrderProductAgent` trên 1 case mẫu, kiểm tra `context.flags` và `context.payment_reconciliation.expected_total_brl`.
 
 ---
@@ -225,7 +225,7 @@ class CaseContext(BaseModel):
 - Nhận `CaseContext` đã được Person 2 điền đầy đủ `expected_total_brl` và trạng thái `has_items`.
 
 ### 📋 Checklist chi tiết:
-- [ ] **3.1 Payment Agent (`src/agents/payment_agent.py`)**:
+- [x] **3.1 Payment Agent (`src/agents/payment_agent.py`)**:
   - Class `PaymentAgent`: Hàm `process(context: CaseContext, data_loader: DataLoader) -> CaseContext`.
   - Lấy danh sách payment rows từ `data_loader.get_order_payments(claimed_order_id)`.
   - `payment_ids`: `[f"{claimed_order_id}:{row['payment_sequential']}" for row in payments]` (tối đa 5).
@@ -240,7 +240,7 @@ class CaseContext(BaseModel):
       - `difference_brl = round(payment_total_brl - context.payment_reconciliation.expected_total_brl, 2)`
       - `reconciled = abs(difference_brl) <= 0.10`
   - Cập nhật cờ: `context.flags.split_payment = len(payments) >= 2`.
-- [ ] **3.2 Delivery Agent (`src/agents/delivery_agent.py`)**:
+- [x] **3.2 Delivery Agent (`src/agents/delivery_agent.py`)**:
   - Class `DeliveryAgent`: Hàm `process(context: CaseContext, data_loader: DataLoader) -> CaseContext`.
   - Trích xuất timestamp từ order:
     - `delivered_at`: `order_delivered_customer_date` (chuỗi `YYYY-MM-DD HH:MM:SS` hoặc `None`).
@@ -261,7 +261,7 @@ class CaseContext(BaseModel):
         - `late_handoff = handoff_variance_hours > 0`
       - Thêm vào `seller_handoff_analysis` object.
       - Nếu `late_handoff == True`, thêm `seller_id` vào `late_handoff_seller_ids`.
-- [ ] **3.3 Verification**:
+- [x] **3.3 Verification**:
   - Chạy test độc lập `PaymentAgent` và `DeliveryAgent` để kiểm tra độ chính xác của các số float làm tròn 2 chữ số và cờ `late_handoff`.
 
 ---
@@ -365,7 +365,7 @@ class CaseContext(BaseModel):
 - Nhận `CaseContext` hoàn chỉnh từ `PolicyAgent`.
 
 ### 📋 Checklist chi tiết:
-- [ ] **5.1 Verifier Agent (`src/agents/verifier_agent.py`)**:
+- [x] **5.1 Verifier Agent (`src/agents/verifier_agent.py`)**:
   - Class `VerifierAgent`: Hàm `verify_and_export(context: CaseContext, output_dir: str, trace_file: str)`.
   - **Cắt lát giới hạn mảng (Max Limits Slicing)**:
     - `order_ids`: max 5
@@ -384,26 +384,18 @@ class CaseContext(BaseModel):
   - **Làm tròn chữ số thập phân**: Ép kiểu `round(val, 2)` cho toàn bộ các thuộc tính tiền tệ và thời gian.
   - **Ghi log trace**: Append 1 dòng JSON vào `trace.jsonl` chứa `case_id`, `primary_issue`, `refund`, `timestamp`.
   - **Xuất JSON**: Ghi `output/{case_id}.json` đúng định dạng Output Schema.
-- [ ] **5.2 Coordinator Agent (`src/agents/coordinator_agent.py`)**:
+- [x] **5.2 Coordinator Agent (`src/agents/coordinator_agent.py`)**:
   - Class `CoordinatorAgent`: Hàm `run_case(input_case_path: str) -> dict`.
   - Đọc file JSON trong `input/`.
   - Khởi tạo `CaseContext`.
   - Thực thi chuỗi Handoff lần lượt:
     `CustomerAgent` $\rightarrow$ `OrderProductAgent` $\rightarrow$ `PaymentAgent` $\rightarrow$ `DeliveryAgent` $\rightarrow$ `PolicyAgent` $\rightarrow$ `VerifierAgent`.
-- [ ] **5.3 Main Script (`main.py`)**:
+- [x] **5.3 Main Script (`main.py`)**:
   - Quét 50 file `EC_001.json` đến `EC_050.json` trong `input/`.
   - Gọi `CoordinatorAgent` xử lý từng file.
   - Tự động nén thư mục `output/` thành `output.zip` chứa đúng 50 file JSON.
-- [ ] **5.4 Documentation & Artifacts**:
+- [x] **5.4 Documentation & Artifacts**:
   - **`architecture.md`**: Viết sơ đồ Mermaid, liệt kê 7 Agent, quyền truy cập dữ liệu và cơ chế Handoff.
-  - **`metadata.json`**: Khai báo đúng định dạng:
-    ```json
-    {
-      "model_name": "Qwen/Qwen3-VL-8B-Instruct",
-      "parameter_size": "8B",
-      "framework": "Python 3.10+, Pydantic v2, Pandas",
-      "runtime": "Linux / CUDA"
-    }
-    ```
-  - **`individual_5SoCuoiMHV_HoVaTen.md`**: Viết báo cáo cá nhân tổng kết quá trình xây dựng hệ thống.
-- [ ] **5.5 Final Check**: Run `python main.py`, kiểm tra `output.zip` giải nén ra đúng 50 file JSON, không thiếu trường nào.
+  - **`metadata.json`**: Khai báo đúng định dạng.
+  - **`individual_5SoCuoiMHV_HoVaTen.md`**: Mẫu báo cáo cá nhân chuẩn bị để điền thông tin.
+- [x] **5.5 Final Check**: Run `python main.py`, kiểm tra `output.zip` giải nén ra đúng 50 file JSON, không thiếu trường nào.
