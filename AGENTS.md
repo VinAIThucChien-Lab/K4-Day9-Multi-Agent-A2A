@@ -14,7 +14,7 @@ Mục tiêu: **Không bị trùng lặp hay xung đột code (conflict)**, ngư�
 1. **Shared State / Context Model**: Tất cả các Agent đọc và ghi vào một đối tượng duy nhất `CaseContext` (được định nghĩa chi tiết ở Bước 1 trong `src/schemas.py`).
 2. **Không tự ý đổi tên trường trong `CaseContext`**: Người làm sau dựa vào các thuộc tính của `CaseContext`. Nếu cần thêm thuộc tính phụ, hãy thêm vào `flags: InternalFlags`.
 3. **Môi trường & Git**:
-   - API Key đặt tại `.env` (`NVIDIA_API_KEY`, etc.).
+   - API Key đặt tại `.env` (`HF_TOKEN`, `HUGGINGFACEHUB_API_TOKEN`, etc.).
    - Model name cố định trong code và `metadata.json` (Model $\le 10\text{B}$ parameters, e.g. `Qwen/Qwen3-VL-8B-Instruct`).
    - Mỗi người làm trên file/module được phân công, không sửa file của người khác.
 
