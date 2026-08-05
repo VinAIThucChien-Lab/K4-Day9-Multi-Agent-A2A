@@ -14,7 +14,7 @@ Mục tiêu: **Không bị trùng lặp hay xung đột code (conflict)**, ngư�
 1. **Shared State / Context Model**: Tất cả các Agent đọc và ghi vào một đối tượng duy nhất `CaseContext` (được định nghĩa chi tiết ở Bước 1 trong `src/schemas.py`).
 2. **Không tự ý đổi tên trường trong `CaseContext`**: Người làm sau dựa vào các thuộc tính của `CaseContext`. Nếu cần thêm thuộc tính phụ, hãy thêm vào `flags: InternalFlags`.
 3. **Môi trường & Git**:
-   - API Key đặt tại `.env` (`NVIDIA_API_KEY`, etc.).
+   - API Key đặt tại `.env` (`HF_TOKEN`, `HUGGINGFACEHUB_API_TOKEN`, etc.).
    - Model name cố định trong code và `metadata.json` (Model $\le 10\text{B}$ parameters, e.g. `Qwen/Qwen3-VL-8B-Instruct`).
    - Mỗi người làm trên file/module được phân công, không sửa file của người khác.
 
@@ -277,7 +277,7 @@ class CaseContext(BaseModel):
 - Nhận `CaseContext` chứa đầy đủ thông tin domain từ Customer, Order, Payment và Delivery Agent.
 
 ### 📋 Checklist chi tiết:
-- [ ] **4.1 Áp dụng Quy Tắc Primary Issue (Thứ tự ưu tiên tuyệt đối 1 -> 6)**:
+- [x] **4.1 Áp dụng Quy Tắc Primary Issue (Thứ tự ưu tiên tuyệt đối 1 -> 6)**:
   - **Rule 1 (`canceled_order_paid`)**:
     - *Điều kiện*: `context.flags.order_status == "canceled"` VÀ `payment_total_brl > 0`.
     - *Primary Issue*: `canceled_order_paid`
@@ -320,31 +320,31 @@ class CaseContext(BaseModel):
     - *Responsible Party*: Không có (`responsible_parties = []`)
     - *Refund*: `0.0`
     - *Main Action*: `reject_late_refund`
-- [ ] **4.2 Xác Định Secondary Issues (Thêm lần lượt theo đúng thứ tự)**:
+- [x] **4.2 Xác Định Secondary Issues (Thêm lần lượt theo đúng thứ tự)**:
   Khởi tạo `secondary_issues = []`. Check theo thứ tự:
   1. `multi_item_order`: nếu `context.flags.multi_item_order == True`
   2. `multi_seller_order`: nếu `context.flags.multi_seller_order == True`
   3. `split_payment`: nếu `context.flags.split_payment == True`
   4. `repeat_customer`: nếu `context.flags.repeat_customer == True`
   5. `multiple_categories`: nếu `context.flags.multiple_categories == True`
-- [ ] **4.3 Xây Dựng Evidence IDs (Thứ tự định sẵn)**:
+- [x] **4.3 Xây Dựng Evidence IDs (Thứ tự định sẵn)**:
   Tạo danh sách `evidence_ids`:
   1. `f"order:{claimed_order_id}"`
   2. Từng item: `f"item:{claimed_order_id}:{item_seq}"`
   3. Từng payment: `f"payment:{claimed_order_id}:{payment_seq}"`
   4. Từng seller chịu trách nhiệm (nếu có): `f"seller:{seller_id}"`
   5. Policy: `f"policy:{cause_code}"`
-- [ ] **4.4 Xây Dựng Resolution Actions Bổ Sung**:
+- [x] **4.4 Xây Dựng Resolution Actions Bổ Sung**:
   - Bắt đầu bằng `Main Action`.
   - Nếu primary issue thuộc seller late delivery: thêm `"review_seller_handoff"`.
   - Nếu primary issue thuộc carrier late delivery: thêm `"review_carrier_delay"`.
   - Nếu `recommended_refund_brl > 0`: thêm `"verify_refund_completion"`.
   - Nếu `context.flags.multi_seller_order == True`: thêm `"coordinate_multi_seller_case"`.
   - Nếu `context.flags.split_payment == True` VÀ `primary_issue != "valid_split_payment"`: thêm `"verify_payment_allocation"`.
-- [ ] **4.5 Set Status & Confidence**:
+- [x] **4.5 Set Status & Confidence**:
   - `case_status`: `"action_required"` nếu `recommended_refund_brl > 0`, ngược lại `"no_action"`.
   - `confidence`: `0.95`.
-- [ ] **4.6 Verification**:
+- [x] **4.6 Verification**:
   - Test `PolicyAgent` trên 6 kịch bản ứng với 6 primary issues để đảm bảo kết quả chính xác 100%.
 
 ---

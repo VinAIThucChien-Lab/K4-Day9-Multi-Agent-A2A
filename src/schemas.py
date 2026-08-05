@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 class CaseAssessment(BaseModel):
@@ -72,7 +72,7 @@ class InternalFlags(BaseModel):
 
 class CaseContext(BaseModel):
     case_id: str
-    claimed_order_id: str = ""
+    claimed_order_id: str
     customer_request: Dict[str, Any] = Field(default_factory=dict)
     investigation_scope: Dict[str, Any] = Field(default_factory=dict)
     policy_version: str = "EC_POLICY_V2"
@@ -89,9 +89,3 @@ class CaseContext(BaseModel):
     resolution_actions: List[str] = Field(default_factory=list)
     
     flags: InternalFlags = Field(default_factory=InternalFlags)
-
-    @model_validator(mode='after')
-    def extract_claimed_order_id(self):
-        if not self.claimed_order_id and "claimed_order_id" in self.customer_request:
-            self.claimed_order_id = self.customer_request["claimed_order_id"]
-        return self
