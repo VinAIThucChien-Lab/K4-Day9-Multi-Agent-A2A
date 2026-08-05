@@ -7,7 +7,11 @@ Hệ thống Multi-Agent giải quyết khiếu nại thương mại điện t�
 ## User Review Required
 
 > [!IMPORTANT]
+<<<<<<< Updated upstream
 > - **Cấu hình Model**: Đã ghi nhận cấu hình `.env` (`NVIDIA_API_KEY`, `meta/llama-3.1-8b-instruct`). Tất cả các agent sẽ tuân thủ quy định model <= 10B parameters.
+=======
+> - **Cấu hình Model**: Đã ghi nhận cấu hình `.env` (`NVIDIA_API_KEY`, `Qwen/Qwen3-VL-8B-Instruct`). Tất cả các agent sẽ tuân thủ quy định model <= 10B parameters.
+>>>>>>> Stashed changes
 > - **Nguyên tắc dữ liệu**: Sử dụng các rule-based parser kết hợp LLM Agent trong việc kiểm tra, tổng hợp evidence và áp dụng `EC_POLICY_V2` để đảm bảo tính chuẩn xác tuyệt đối (không sinh dữ liệu giả/hallucination).
 
 ---
