@@ -64,6 +64,53 @@ class VerifierAgent:
                 data["payment_reconciliation"]["difference_brl"] = None
                 data["payment_reconciliation"]["reconciled"] = None
 
+        # LLM: Final sanity check — đánh giá tính nhất quán và điều chỉnh confidence
+        # Python đã chuẩn bị toàn bộ data; LLM chỉ đánh giá final quality
+        try:
+            from src.llm_client import call_llm
+            primary_issue = (
+                data.get("case_assessment", {}).get("primary_issue", "")
+                if data.get("case_assessment") else ""
+            )
+            refund = (
+                data.get("financial_resolution", {}).get("recommended_refund_brl", 0.0)
+                if data.get("financial_resolution") else 0.0
+            )
+            actions = data.get("resolution_actions", [])
+            cause_codes = [c.get("cause_code") for c in data.get("root_cause_analysis", {}).get("ranked_causes", [])]
+
+            prompt = f"""Bạn là một chuyên viên kiểm soát chất lượng (QA) về giải quyết tranh chấp thương mại điện tử.
+Hãy kiểm tra tính nhất quán nội bộ của quyết định này:
+
+- primary_issue: {primary_issue}
+- cause_codes: {cause_codes}
+- recommended_refund_brl: {refund}
+- resolution_actions: {actions}
+- delay_severity: {context.flags.delay_severity}
+- payment_anomaly: {context.flags.payment_anomaly}
+- customer_risk_level: {context.flags.customer_risk_level}
+
+Đánh giá độ tin cậy (confidence): 0.95 nếu hoàn toàn nhất quán, 0.85 nếu có một số điểm cần lưu ý (minor concerns), 0.70 nếu không nhất quán."""
+
+            verifier_schema = {
+                "type": "object",
+                "properties": {
+                    "consistent": {"type": "boolean"},
+                    "confidence": {"type": "number"},
+                    "notes": {"type": "string"}
+                },
+                "required": ["consistent", "confidence", "notes"],
+                "additionalProperties": False
+            }
+
+            result = call_llm(prompt, schema=verifier_schema, max_tokens=1024)
+            if result and data.get("case_assessment"):
+                confidence = float(result.get("confidence", 0.95))
+                # Clamp to valid range
+                data["case_assessment"]["confidence"] = max(0.0, min(1.0, confidence))
+        except Exception:
+            pass  # Don't fail export if LLM check fails
+
         # Write output file
         out_path = os.path.join(output_dir, f"{context.case_id}.json")
         with open(out_path, "w", encoding="utf-8") as f:
@@ -88,3 +135,4 @@ class VerifierAgent:
             f.write(json.dumps(trace_entry) + "\n")
 
         return data
+

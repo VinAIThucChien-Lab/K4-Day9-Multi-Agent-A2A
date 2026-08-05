@@ -1,6 +1,6 @@
 {
-  "model_name": "Qwen/Qwen3-VL-8B-Instruct",
+  "model_name": "meta/llama-3.1-8b-instruct",
   "parameter_size": "8B",
   "framework": "Python 3.10+, LangGraph, LangChain, Pydantic v2, Pandas",
-  "runtime": "Windows / PyTorch / CUDA"
+  "runtime": "API Provider"
 }

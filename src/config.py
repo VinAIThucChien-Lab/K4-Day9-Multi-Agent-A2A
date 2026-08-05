@@ -10,4 +10,11 @@ INPUT_DIR = sub_input if os.path.exists(sub_input) and any(f.startswith("EC_") f
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 LOGGING_DIR = os.path.join(BASE_DIR, "logs")
 
-LLM_MODEL_NAME = "Qwen/Qwen3-VL-8B-Instruct"
+# Model name hardcoded in source per submission rules (must not be in .env)
+LLM_MODEL_NAME = "meta/llama-3.1-8b-instruct"       # NVIDIA NIM model
+GROQ_MODEL_NAME = "llama-3.1-8b-instant"             # Groq model (≤10B params)
+OPENAI_MODEL_NAME = "gpt-4o-mini"                    # OpenAI fast model
+
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

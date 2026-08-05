@@ -9,4 +9,3 @@ logs/
 logging/
 output/
 *.zip
-trace.jsonl
